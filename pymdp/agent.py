@@ -13,6 +13,15 @@ from pymdp import inference, control, learning
 from pymdp import utils, maths
 import copy
 
+"""
+#TODO 
+we have the likelihood precision and transition precision which parameterize the augmentation to A and B
+then we have the priors over those precisions that come from a gamma distribution with sufficient statistic beta 
+what do we do with that prior? 
+we need to implement an update to the precision parameter.. TBD
+
+"""
+
 class Agent(object):
     """ 
     The Agent class, the highest-level API that wraps together processes for action, perception, and learning under active inference.
@@ -45,6 +54,8 @@ class Agent(object):
         inference_horizon=1,
         control_fac_idx=None,
         policies=None,
+        likelihood_precision = 1.0, 
+        transition_precision = 1.0,
         gamma=16.0,
         alpha=16.0,
         use_utility=True,
@@ -53,7 +64,6 @@ class Agent(object):
         action_selection="deterministic",
         sampling_mode = "marginal", # whether to sample from full posterior over policies ("full") or from marginal posterior over actions ("marginal")
         inference_algo="VANILLA",
-        inference_params=None,
         modalities_to_learn="all",
         lr_pA=1.0,
         factors_to_learn="all",
@@ -88,6 +98,13 @@ class Agent(object):
             raise TypeError(
                 'A matrix must be a numpy array'
             )
+
+
+        if likelihood_precision != 1.0:
+            self.A = self.A ** likelihood_precision / (self.A ** likelihood_precision).sum(axis=0)
+
+        if transition_precision != 1.0:
+            self.B = self.B ** transition_precision / (self.B ** transition_precision).sum(axis=0)
 
         self.A = utils.to_obj_array(A)
 
