@@ -98,17 +98,23 @@ class Agent(object):
             raise TypeError(
                 'A matrix must be a numpy array'
             )
-
+        if not isinstance(B, np.ndarray):
+            raise TypeError(
+                'B matrix must be a numpy array'
+            )
+        
+        self.A = utils.to_obj_array(A)
+        self.B = utils.to_obj_array(B)
 
         if likelihood_precision != 1.0:
-            self.A = self.A ** likelihood_precision / (self.A ** likelihood_precision).sum(axis=0)
+            self.A = utils.scale_likelihood(self.A, likelihood_precision)
 
         if transition_precision != 1.0:
-            self.B = self.B ** transition_precision / (self.B ** transition_precision).sum(axis=0)
+            self.B = utils.scale_likelihood(self.B, transition_precision)
 
-        self.A = utils.to_obj_array(A)
 
         assert utils.is_normalized(self.A), "A matrix is not normalized (i.e. A.sum(axis = 0) must all equal 1.0)"
+        assert utils.is_normalized(self.B), "B matrix is not normalized (i.e. B.sum(axis = 0) must all equal 1.0)"
 
         # Determine number of observation modalities and their respective dimensions
         self.num_obs = [self.A[m].shape[0] for m in range(len(self.A))]
@@ -116,16 +122,6 @@ class Agent(object):
 
         # Assigning prior parameters on observation model (pA matrices)
         self.pA = pA
-
-        # Initialise transition model (B matrices)
-        if not isinstance(B, np.ndarray):
-            raise TypeError(
-                'B matrix must be a numpy array'
-            )
-
-        self.B = utils.to_obj_array(B)
-
-        assert utils.is_normalized(self.B), "B matrix is not normalized (i.e. B.sum(axis = 0) must all equal 1.0)"
 
         # Determine number of hidden state factors and their dimensionalities
         self.num_states = [self.B[f].shape[0] for f in range(len(self.B))]

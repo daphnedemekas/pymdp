@@ -572,6 +572,29 @@ def convert_B_stubs_to_ndarray(B_stubs, model_labels):
 
     return B
 
+def scale_likelihood(likelihood_matrix, precision):
+    """
+    This function scales the likelihood array by the likelihood precision
+    
+    Should I be normalising this at the end or does it normalise itself? 
+    Also should I be converting to logs? 
+    """
+
+    if np.isscalar(precision):
+        likelihood_matrix = likelihood_matrix ** precision / (likelihood_matrix ** precision).sum(axis=0)
+    elif isinstance(precision, np.ndarray):
+        if precision.ndim == 1:
+            for m in range(len(likelihood_matrix)):
+                likelihood_matrix[m] = likelihood_matrix[m] ** precision[m] / (likelihood_matrix[m] ** precision[m]).sum(axis=0)
+        elif precision.ndim == 2:
+            for m in range(len(likelihood_matrix)):
+                likelihood_matrix[m] = likelihood_matrix[m] ** precision[:, m] / (likelihood_matrix[m] ** precision[:, m]).sum(axis=0)
+        else:
+            raise ValueError('likelihood_precision must be a scalar, a vector, or a 2D array')
+    else:
+        raise TypeError('likelihood_precision must be a scalar or a numpy array')
+
+    return likelihood_matrix
 # def build_belief_array(qx):
 
 #     """
